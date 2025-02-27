@@ -191,25 +191,33 @@ export const ForgetPasswordOtpController = async (req, res) => {
 };
 
 export const VerifyOtpController = async (req, res) => {
-  const { email, otp } = req.body;
+  const { forgetPasswordOtp } = req.body;
   try {
-    if (!email || !otp) {
+    if (!forgetPasswordOtp) {
       return res.status(400).json({
-        message: " OTP is required",
+        message: "OTP is required",
         success: false,
         error: true,
       });
     }
 
-    const user = await userModel.findOne({ email });
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
+    const user = await userModel.findOne({ forgetPasswordOtp });
+    // if (!user) {
+    //   return res.status(404).json({
+    //     message: "User not found",
+    //     success: false,
+    //     error: true,
+    //   });
+    // }
+
+
+    if (!user.forgetPasswordOtp) {
+      return res.status(400).json({
+        message: "OTP is invalid ",
         success: false,
         error: true,
       });
     }
-
     if (!user.forgetPasswordOtp || !user.forgetPasswordOtpExpire || user.forgetPasswordOtpExpire < Date.now()) {
       return res.status(400).json({
         message: "OTP is invalid or has expired",
@@ -218,14 +226,14 @@ export const VerifyOtpController = async (req, res) => {
       });
     }
 
-    const isOtpMatch = await bcryptjs.compare(otp, user.forgetPasswordOtp);
-    if (!isOtpMatch) {
-      return res.status(400).json({
-        message: "Invalid OTP",
-        success: false,
-        error: true,
-      });
-    }
+    // const isOtpMatch = await bcryptjs.compare(otp, user.forgetPasswordOtp);
+    // if (!isOtpMatch) {
+    //   return res.status(400).json({
+    //     message: "Invalid OTP",
+    //     success: false,
+    //     error: true,
+    //   });
+    // }
 
     return res.status(200).json({
       message: "OTP verified successfully",
@@ -253,12 +261,12 @@ export const UpdatePasswordController = async (req, res) => {
     }
  // ✅ Hash and update password
  const hashPassword = await bcryptjs.hash(newPassword, 10);
- user.password = hashPassword;
+ newPassword = hashPassword;
 
  // ✅ Reset OTP values in DB
- user.forgetPasswordOtp = null;
- user.forgetPasswordOtpExpire = null;
- await user.save();
+ forgetPasswordOtp = null;
+ forgetPasswordOtpExpire = null;
+ 
 
     return res.status(200).json({
       message: "Password reset successfully",
